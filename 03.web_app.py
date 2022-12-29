@@ -2,32 +2,32 @@ from gradio.components import Image
 from gradio.components import Label
 from gradio import Interface
 
-from sklearn.preprocessing import MinMaxScaler 
+import numpy as np
+import joblib
 
-import joblib 
+model = joblib.load(filename='models/digit_pipeline.joblib')
 
-model=joblib.load(filename='models/digit_model.joblib')
-
-input_image = Image(shape=(8,8), image_model='L', invert_colors=True, source='canvas', label='INPUT DIGIT')
-output_labels = Label(num_top_classes=10, label='MODEL PREDICTION' )
-title='Digit classifier with ML'
-description='This project is a demo for the class fo TAG DS&AI master. '
+input_image = Image(shape=(8, 8), image_model='L', invert_colors=True,
+                    source='canvas', label='INPUT DIGIT')
+output_labels = Label(num_top_classes=10, label='MODEL PREDICTION')
+title = 'Digit classifier with ML'
+description = '<center>This project is a demo for the class of TAG DS&AI master.</center>'
 
 
 def predict_image(image):
-    flat_image = image.reshape(-1,64)
-    print(flat_image)
-    return None
+    labels = np.arange(start=0, stop=10, dtype=int).astype(str)
+    flat_image = image.reshape(-1, 64)
+    scaled_image = ((flat_image / 255) * 16).astype(np.uint64)
+    probas = model.predict_proba(X=scaled_image)[0]
+    result = {label: proba for label, proba in zip(labels, probas)}
+    return result
 
 
-interface= Interface(
-    fn=predict_image, 
-    inputs=input_image, 
-    outputs=output_labels, 
-    title=title, 
+interface = Interface(
+    fn=predict_image,
+    inputs=input_image,
+    outputs=output_labels,
+    title=title,
     description=description,
     )
-interface.launch()
-
-
-
+interface.launch(share=True)
